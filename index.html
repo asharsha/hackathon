@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Collaborative Filtering Recommender</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background-color: #007BFF;
+            color: white;
+            padding: 20px;
+            margin: 0;
+            text-align: center;
+        }
+
+        #recommend-form {
+            text-align: center;
+            margin: 20px auto;
+        }
+
+        label {
+            font-size: 18px;
+        }
+
+        input[type="text"] {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button[type="submit"] {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #recommendations {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .recommended-item {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .recommended-item:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Collaborative Filtering Recommender</h1>
+    <form id="recommend-form">
+        <label for="customer_id">Enter Customer ID: </label>
+        <input type="text" id="customer_id" name="customer_id" required>
+        <button type="submit">Recommend Items</button>
+    </form>
+    <div id="recommendations">
+        <!-- Recommended items will be displayed here -->
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#recommend-form").submit(function (event) {
+                event.preventDefault();
+                var customer_id = $("#customer_id").val();
+                $.ajax({
+                    type: "POST",
+                    url: "/recommend",
+                    data: { customer_id: customer_id },
+                    success: function (data) {
+                        var recommendations = '';
+                        for (var item in data.recommended_items) {
+                            var description = data.recommended_items[item];
+                            recommendations += `<div class="recommended-item" data-stock-code="${item}">${description}</div>`;
+                        }
+                        $("#recommendations").html(recommendations);
+
+                        // Add a click event handler to remove clicked items
+                        $(".recommended-item").click(function () {
+                            var stockCode = $(this).data("stock-code");
+                            $(this).remove();
+
+                            // Send an AJAX request to mark the item as clicked on the server
+                            $.ajax({
+                                type: "POST",
+                                url: "/item_click",
+                                data: { stock_code: stockCode },
+                                success: function (response) {
+                                    console.log(response.message);
+                                }
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
